@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
@@ -13,11 +13,18 @@ import {
   Database,
   Info,
   Sparkles,
-  CheckSquare
+  CheckSquare,
+  Zap,
+  Plus,
+  FileText,
+  Activity,
+  Award
 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'motion/react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
 import { dbService } from '../services/db';
 import { Client, Receipt, Task, Post } from '../types';
 import { useAuth } from '../hooks/useAuth';
@@ -98,9 +105,107 @@ export function Dashboard() {
     };
   }, [profile]);
 
+  const [showPulseDetails, setShowPulseDetails] = useState(false);
   const totalRevenue = receipts.reduce((sum, r) => sum + r.amount, 0);
   const activeClients = clients.filter(c => c.status === 'active').length;
   const pendingTasks = tasks.filter(t => t.status !== 'completed').length;
+  const completedTasks = tasks.filter(t => t.status === 'completed').length;
+  
+  const pulseScore = useMemo(() => {
+    if (tasks.length === 0) return 85;
+    const completionRate = (completedTasks / tasks.length) * 100;
+    const clientHealth = (activeClients / (clients.length || 1)) * 100;
+    return Math.round((completionRate * 0.6) + (clientHealth * 0.4));
+  }, [tasks, clients, completedTasks, activeClients]);
+
+  const handleQuickAction = (action: string) => {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#06b6d4', '#8b5cf6', '#3b82f6']
+    });
+    
+    switch(action) {
+      case 'new-client': navigate('/clients'); break;
+      case 'new-task': navigate('/tasks'); break;
+      case 'new-receipt': navigate('/receipts'); break;
+      case 'new-post': navigate('/hub'); break;
+      default: break;
+    }
+  };
+
+  const renderQuickActions = () => {
+    const actions = [
+      { id: 'new-client', label: 'Add Client', icon: Plus, color: 'bg-cyan-500', roles: ['admin', 'employee'] },
+      { id: 'new-task', label: 'Create Task', icon: CheckSquare, color: 'bg-purple-500', roles: ['admin', 'employee'] },
+      { id: 'new-receipt', label: 'Log Receipt', icon: FileText, color: 'bg-emerald-500', roles: ['admin', 'employee', 'client'] },
+      { id: 'new-post', label: 'Share Update', icon: MessageSquare, color: 'bg-blue-500', roles: ['admin', 'employee'] },
+    ].filter(a => a.roles.includes(profile?.role || ''));
+
+    return (
+      <Card className="border-slate-800/50 bg-slate-900/30 p-6">
+        <h3 className="mb-4 text-sm font-bold uppercase tracking-widest text-slate-500">Quick Actions</h3>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {actions.map((action) => (
+            <motion.button
+              key={action.id}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleQuickAction(action.id)}
+              className="flex flex-col items-center gap-3 rounded-2xl bg-slate-950/50 p-4 border border-slate-800/50 transition-colors hover:border-cyan-500/30 hover:bg-slate-900"
+            >
+              <div className={cn("rounded-xl p-2.5 text-white shadow-lg", action.color)}>
+                <action.icon className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-bold text-slate-300">{action.label}</span>
+            </motion.button>
+          ))}
+        </div>
+      </Card>
+    );
+  };
+
+  const renderPulseScore = () => (
+    <Card 
+      className="relative overflow-hidden border-slate-800/50 bg-slate-900/30 p-6 group cursor-pointer"
+      onClick={() => setShowPulseDetails(true)}
+    >
+      <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-cyan-500/10 blur-[60px] transition-all group-hover:bg-cyan-500/20" />
+      <div className="relative z-10 flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500">System Pulse</h3>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-4xl font-black text-white">{pulseScore}</span>
+            <span className="text-sm font-bold text-cyan-400">/ 100</span>
+          </div>
+          <p className="mt-1 text-xs text-slate-400">Click to view breakdown</p>
+        </div>
+        <div className="relative flex h-20 w-20 items-center justify-center">
+          <svg className="h-full w-full" viewBox="0 0 36 36">
+            <path
+              className="stroke-slate-800"
+              strokeDasharray="100, 100"
+              strokeWidth="3"
+              fill="none"
+              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+            />
+            <motion.path
+              initial={{ strokeDasharray: "0, 100" }}
+              animate={{ strokeDasharray: `${pulseScore}, 100` }}
+              transition={{ duration: 1.5, ease: "easeOut" }}
+              className="stroke-cyan-500"
+              strokeWidth="3"
+              strokeLinecap="round"
+              fill="none"
+              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+            />
+          </svg>
+          <Activity className="absolute h-6 w-6 text-cyan-500 animate-pulse" />
+        </div>
+      </div>
+    </Card>
+  );
 
   const renderAdminDashboard = () => {
     const stats = [
@@ -140,6 +245,15 @@ export function Dashboard() {
 
     return (
       <div className="space-y-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            {renderQuickActions()}
+          </div>
+          <div>
+            {renderPulseScore()}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat, i) => (
             <motion.div
@@ -300,6 +414,15 @@ export function Dashboard() {
 
     return (
       <div className="space-y-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            {renderQuickActions()}
+          </div>
+          <div>
+            {renderPulseScore()}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat, i) => (
             <motion.div
@@ -482,6 +605,15 @@ export function Dashboard() {
 
     return (
       <div className="space-y-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            {renderQuickActions()}
+          </div>
+          <div>
+            {renderPulseScore()}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat, i) => (
             <motion.div
@@ -686,6 +818,50 @@ export function Dashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <Modal
+        isOpen={showPulseDetails}
+        onClose={() => setShowPulseDetails(false)}
+        title="Pulse Score Breakdown"
+      >
+        <div className="space-y-6 p-1">
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-950 border border-slate-800">
+            <div>
+              <h4 className="text-sm font-bold text-white">Task Efficiency</h4>
+              <p className="text-xs text-slate-500">Completion rate vs total tasks</p>
+            </div>
+            <div className="text-lg font-black text-cyan-400">
+              {Math.round((completedTasks / (tasks.length || 1)) * 100)}%
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-950 border border-slate-800">
+            <div>
+              <h4 className="text-sm font-bold text-white">Client Engagement</h4>
+              <p className="text-xs text-slate-500">Active clients vs total</p>
+            </div>
+            <div className="text-lg font-black text-purple-400">
+              {Math.round((activeClients / (clients.length || 1)) * 100)}%
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-950 border border-slate-800">
+            <div>
+              <h4 className="text-sm font-bold text-white">Community Activity</h4>
+              <p className="text-xs text-slate-500">Recent PulseHub interactions</p>
+            </div>
+            <div className="text-lg font-black text-blue-400">
+              {posts.length > 5 ? 'High' : 'Normal'}
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-cyan-500/5 border border-cyan-500/20">
+            <p className="text-xs text-cyan-400 leading-relaxed italic">
+              "The Pulse Score is a real-time indicator of your business momentum. It balances operational efficiency with client growth and community engagement."
+            </p>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

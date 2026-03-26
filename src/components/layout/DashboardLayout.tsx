@@ -1,11 +1,13 @@
 import { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
 import { Navbar } from './Navbar';
+import { CommandPalette } from './CommandPalette';
 import { motion, AnimatePresence } from 'motion/react';
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-[#0f172a] text-slate-200">
+      <CommandPalette />
       <Sidebar />
       <div className="flex flex-col ml-64 min-h-screen">
         <Navbar />
