@@ -24,6 +24,7 @@ import { format } from 'date-fns';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { serverTimestamp } from 'firebase/firestore';
+import { generateReceiptPDF } from '../services/pdfService';
 
 export function Receipts() {
   const navigate = useNavigate();
@@ -103,8 +104,12 @@ export function Receipts() {
   }, [receipts, searchQuery, clientFilter]);
 
   const handleDownload = (receipt: Receipt) => {
-    alert(`Downloading receipt for ${receipt.clientName} ($${receipt.amount})...`);
-    // In a real app, this would generate a PDF or trigger a download link
+    try {
+      generateReceiptPDF(receipt);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
   };
 
   return (

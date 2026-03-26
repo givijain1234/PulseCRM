@@ -20,6 +20,7 @@ import { dbService } from '../services/db';
 import { Receipt } from '../types';
 import { format } from 'date-fns';
 import { useAuth } from '../hooks/useAuth';
+import { generateReceiptPDF } from '../services/pdfService';
 
 export default function ReceiptDetail() {
   const { id } = useParams<{ id: string }>();
@@ -40,6 +41,17 @@ export default function ReceiptDetail() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownload = () => {
+    if (receipt) {
+      try {
+        generateReceiptPDF(receipt);
+      } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('Failed to generate PDF. Please try again.');
+      }
+    }
   };
 
   if (loading) {
@@ -71,7 +83,10 @@ export default function ReceiptDetail() {
             <Printer className="mr-2 h-4 w-4" />
             Print
           </Button>
-          <Button className="bg-emerald-500 hover:bg-emerald-600 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+          <Button 
+            onClick={handleDownload}
+            className="bg-emerald-500 hover:bg-emerald-600 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+          >
             <Download className="mr-2 h-4 w-4" />
             Download PDF
           </Button>
