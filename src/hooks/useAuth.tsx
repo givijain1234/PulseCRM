@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             'sara@example.com': 'client'
           };
 
-          const isFirstAdmin = currentUser.email === 'givijain16@gmail.com' || currentUser.email === 'admin@pulsecrm.com';
+          const isFirstAdmin = currentUser.email === 'givijain16@gmail.com' || currentUser.email === 'givijain@gmail.com' || currentUser.email === 'pallavishah3107@gmail.com' || currentUser.email === 'admin@pulsecrm.com';
           const assignedRole: Role = demoEmails[currentUser.email || ''] || preferredRole || (isFirstAdmin ? 'admin' : 'client');
           
           if (preferredRole) sessionStorage.removeItem('preferred_role');

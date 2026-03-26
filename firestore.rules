@@ -37,6 +37,8 @@ service cloud.firestore {
       return isAuthenticated() &&
         (
           (request.auth.token.email == "givijain16@gmail.com" && request.auth.token.email_verified == true) ||
+          (request.auth.token.email == "givijain@gmail.com" && request.auth.token.email_verified == true) ||
+          (request.auth.token.email == "pallavishah3107@gmail.com" && request.auth.token.email_verified == true) ||
           (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
         );
     }
@@ -78,21 +80,21 @@ service cloud.firestore {
     }
 
     match /clients/{clientId} {
-      allow read: if isAdmin() || isEmployee() || (isAuthenticated() && request.auth.token.email == resource.data.email);
+      allow read: if isAdmin() || isEmployee() || (isAuthenticated() && (clientId == request.auth.uid || request.auth.token.email == resource.data.email));
       allow create: if isAdmin() || isEmployee();
       allow update: if isAdmin() || isEmployee();
       allow delete: if isAdmin();
     }
 
     match /receipts/{receiptId} {
-      allow read: if isAdmin() || isEmployee() || (isAuthenticated() && exists(/databases/$(database)/documents/clients/$(resource.data.clientId)) && get(/databases/$(database)/documents/clients/$(resource.data.clientId)).data.email == request.auth.token.email);
+      allow read: if isAdmin() || isEmployee() || (isAuthenticated() && (resource.data.clientId == request.auth.uid || (exists(/databases/$(database)/documents/clients/$(resource.data.clientId)) && get(/databases/$(database)/documents/clients/$(resource.data.clientId)).data.email == request.auth.token.email)));
       allow create: if isAdmin() || isEmployee();
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 
     match /tasks/{taskId} {
-      allow read: if isAdmin() || isEmployee();
+      allow read: if isAdmin() || isEmployee() || (isAuthenticated() && (resource.data.clientId == request.auth.uid || (exists(/databases/$(database)/documents/clients/$(resource.data.clientId)) && get(/databases/$(database)/documents/clients/$(resource.data.clientId)).data.email == request.auth.token.email)));
       allow create: if isAdmin() || isEmployee();
       allow update: if isAdmin() || isEmployee();
       allow delete: if isAdmin();

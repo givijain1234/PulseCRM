@@ -1147,6 +1147,17 @@ export const demoData = {
 export async function seedDatabase(currentUserId?: string) {
   console.log('Starting database seeding...');
 
+  // Security check: Only admins should be able to seed
+  if (currentUserId) {
+    const { getDoc, doc } = await import('firebase/firestore');
+    const { db } = await import('../firebase');
+    const userDoc = await getDoc(doc(db, 'users', currentUserId));
+    if (!userDoc.exists() || userDoc.data()?.role !== 'admin') {
+      console.error('Permission denied: Only admins can seed the database.');
+      return;
+    }
+  }
+
   // Check if we already have data to avoid duplicates
   const existingClients = await dbService.getCollection('clients', [{ field: 'name', operator: '==', value: 'TechNova Solutions' }]);
   if (existingClients.length > 0) {
@@ -1194,9 +1205,12 @@ export async function seedDatabase(currentUserId?: string) {
 
       // Seed Clients
       demoData.clients.forEach((client, i) => {
-        const docRef = doc(db, 'clients', `demo-client-id-${i}`);
+        const user = demoData.users.find(u => u.email === client.email);
+        const clientId = user ? user.uid : `demo-client-id-${i}`;
+        const docRef = doc(db, 'clients', clientId);
         batch.set(docRef, {
           ...client,
+          id: clientId,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
@@ -1210,6 +1224,9 @@ export async function seedDatabase(currentUserId?: string) {
       // Seed Tasks
       demoData.tasks.forEach((task, i) => {
         const randomClientIdx = Math.floor(Math.random() * demoData.clients.length);
+        const client = demoData.clients[randomClientIdx];
+        const user = demoData.users.find(u => u.email === client.email);
+        const clientId = user ? user.uid : `demo-client-id-${randomClientIdx}`;
         
         // Assign some tasks to current user if they are an employee
         let assignedId = employees[Math.floor(Math.random() * employees.length)].uid;
@@ -1223,7 +1240,7 @@ export async function seedDatabase(currentUserId?: string) {
         const docRef = doc(collection(db, 'tasks'));
         batch.set(docRef, {
           ...task,
-          clientId: `demo-client-id-${randomClientIdx}`,
+          clientId: clientId,
           assignedToName: assignedName,
           assignedToId: assignedId,
           createdAt: serverTimestamp(),
@@ -1235,10 +1252,12 @@ export async function seedDatabase(currentUserId?: string) {
       Array.from({ length: 15 }).map((_, i) => {
         const randomClientIdx = Math.floor(Math.random() * demoData.clients.length);
         const client = demoData.clients[randomClientIdx];
+        const user = demoData.users.find(u => u.email === client.email);
+        const clientId = user ? user.uid : `demo-client-id-${randomClientIdx}`;
         
         const docRef = doc(collection(db, 'receipts'));
         batch.set(docRef, {
-          clientId: `demo-client-id-${randomClientIdx}`,
+          clientId: clientId,
           clientName: client?.name || 'Unknown Client',
           amount: Math.floor(Math.random() * 5000) + 500,
           date: new Date(Date.now() - Math.floor(Math.random() * 60) * 24 * 60 * 60 * 1000),

@@ -70,7 +70,7 @@ export const dbService = {
     }
   },
 
-  subscribeCollection<T>(path: string, constraints: any[], callback: (data: T[]) => void) {
+  subscribeCollection<T>(path: string, constraints: any[], callback: (data: T[]) => void, errorCallback?: (error: any) => void) {
     const colRef = collection(db, path);
     const queryConstraints = constraints.map(c => {
       if (c.field && c.operator && c.value !== undefined) {
@@ -85,6 +85,7 @@ export const dbService = {
         callback(data);
       },
       (error) => {
+        if (errorCallback) errorCallback(error);
         handleFirestoreError(error, OperationType.LIST, path);
       }
     );

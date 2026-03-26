@@ -41,14 +41,16 @@ export function Dashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [isSeeding, setIsSeeding] = useState(false);
+  const [seedAttempted, setSeedAttempted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'30' | '90'>('30');
 
   useEffect(() => {
     const checkAndSeed = async () => {
-      // Auto-seed for any user if the database is empty
+      // Auto-seed ONLY for admin users if the database is empty
       // We check if loading is false (initial fetch done) and clients is empty
-      if (loading === false && clients.length === 0 && !isSeeding) {
+      if (loading === false && clients.length === 0 && !isSeeding && !seedAttempted && profile?.role === 'admin') {
+        setSeedAttempted(true);
         setIsSeeding(true);
         try {
           await seedDatabase(profile?.uid);
@@ -61,7 +63,7 @@ export function Dashboard() {
       }
     };
     checkAndSeed();
-  }, [clients.length, loading, isSeeding]);
+  }, [clients.length, loading, isSeeding, seedAttempted, profile?.role]);
 
   useEffect(() => {
     if (!profile) return;
@@ -75,18 +77,18 @@ export function Dashboard() {
       // Employees see all clients and receipts according to requirements
       taskConstraints.push({ field: 'assignedToId', operator: '==', value: profile.uid });
     } else if (profile.role === 'client') {
-      clientConstraints.push({ field: 'id', operator: '==', value: profile.uid });
+      clientConstraints.push({ field: 'email', operator: '==', value: profile.email });
       receiptConstraints.push({ field: 'clientId', operator: '==', value: profile.uid });
       taskConstraints.push({ field: 'clientId', operator: '==', value: profile.uid });
     }
 
-    const unsubClients = dbService.subscribeCollection<Client>('clients', clientConstraints, setClients);
-    const unsubReceipts = dbService.subscribeCollection<Receipt>('receipts', receiptConstraints, setReceipts);
-    const unsubTasks = dbService.subscribeCollection<Task>('tasks', taskConstraints, setTasks);
+    const unsubClients = dbService.subscribeCollection<Client>('clients', clientConstraints, setClients, () => setLoading(false));
+    const unsubReceipts = dbService.subscribeCollection<Receipt>('receipts', receiptConstraints, setReceipts, () => setLoading(false));
+    const unsubTasks = dbService.subscribeCollection<Task>('tasks', taskConstraints, setTasks, () => setLoading(false));
     const unsubPosts = dbService.subscribeCollection<Post>('posts', [], (data) => {
       setPosts(data.slice(0, 3));
       setLoading(false);
-    });
+    }, () => setLoading(false));
 
     return () => {
       unsubClients();
