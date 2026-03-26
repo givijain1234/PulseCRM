@@ -1,0 +1,162 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Represents a user of the CRM system (Admin, Employee, or Client).",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "format": "email" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "employee", "client"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Client": {
+      "title": "Client",
+      "description": "Represents a customer in the CRM.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "company": { "type": "string" },
+        "assignedEmployeeId": { "type": "string", "description": "UID of the employee assigned to this client" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email"]
+    },
+    "Receipt": {
+      "title": "Receipt",
+      "description": "Represents a transaction receipt linked to a client.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clientId": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "description": { "type": "string" },
+        "items": { "type": "array", "items": { "type": "object" } },
+        "pdfUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["clientId", "amount", "date"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "Represents a task or interaction tracking for a client.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clientId": { "type": "string" },
+        "title": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "in-progress", "completed"] },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["clientId", "title", "status"]
+    },
+    "ActivityLog": {
+      "title": "ActivityLog",
+      "description": "Represents a log of actions performed in the CRM.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "action": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "details": { "type": "string" }
+      },
+      "required": ["userId", "action", "timestamp"]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "A blog post or article in PulseHub.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "authorId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "coverImage": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "category": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "likesCount": { "type": "number" },
+        "commentsCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["authorId", "title", "content", "status"]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "A comment on a PulseHub post.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "postId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["postId", "authorId", "content"]
+    },
+    "Like": {
+      "title": "Like",
+      "description": "A like on a PulseHub post.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "postId": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["postId", "userId"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "A community event, webinar, or workshop.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "organizerId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "location": { "type": "string" },
+        "type": { "type": "string", "enum": ["webinar", "workshop", "meeting"] },
+        "registrationsCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["organizerId", "title", "date", "type"]
+    },
+    "Registration": {
+      "title": "Registration",
+      "description": "A user registration for an event.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "eventId": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["eventId", "userId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": "User", "description": "User profiles and roles" },
+    "/clients/{clientId}": { "schema": "Client", "description": "Client information" },
+    "/receipts/{receiptId}": { "schema": "Receipt", "description": "Transaction receipts" },
+    "/tasks/{taskId}": { "schema": "Task", "description": "Client tasks and interactions" },
+    "/logs/{logId}": { "schema": "ActivityLog", "description": "System activity logs" },
+    "/posts/{postId}": { "schema": "Post", "description": "PulseHub blog posts" },
+    "/posts/{postId}/comments/{commentId}": { "schema": "Comment", "description": "Comments on posts" },
+    "/likes/{likeId}": { "schema": "Like", "description": "Post likes" },
+    "/events/{eventId}": { "schema": "Event", "description": "Community events" },
+    "/events/{eventId}/registrations/{regId}": { "schema": "Registration", "description": "Event registrations" }
+  }
+}
