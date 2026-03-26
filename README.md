@@ -1,20 +1,36 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 🚀 PulseCRM
 
-# Run and deploy your AI Studio app
+> A modern full-stack CRM with client management, financial tracking, and a built-in community platform (PulseHub).
 
-This contains everything you need to run your app locally.
+---
 
-View your app in AI Studio: https://ai.studio/apps/f8c9d3ab-8f61-4488-b70a-9984210ceee9
+## 🔗 View AI Prototype
+👉 https://ai.studio/apps/f8c9d3ab-8f61-4488-b70a-9984210ceee9?fullscreenApplet=true
 
-## Run Locally
+---
 
-**Prerequisites:**  Node.js
+## ⚡ Features
+- 🔐 Google Authentication (RBAC: Admin / Employee / Client)
+- 👥 Client & Employee Management (CRUD)
+- ✅ Task & Activity Tracking
+- 💰 Receipt Generation + PDF Export
+- 🌍 PulseHub (Blogs, Posts, Community)
+- 📅 Events System
+- ⚡ Real-time updates (Firebase)
 
+---
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 🛠️ Tech Stack
+- React 19 + Vite + TypeScript  
+- Tailwind CSS  
+- Firebase (Auth + Firestore)  
+- Recharts, Motion, Lucide Icons  
+
+---
+
+## 🚀 Run Locally
+```bash
+git clone https://github.com/your-username/pulsecrm.git
+cd pulsecrm
+npm install
+npm run dev
